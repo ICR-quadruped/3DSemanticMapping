@@ -34,6 +34,7 @@ Projector::Projector(ros::NodeHandle * node_handle, vector<string> classes, stri
     cloud_sub = nh->subscribe(pointcloud_topic, 10, &Projector::cloud_callback, this);
     boxes_sub = nh->subscribe(boxes_topic, 10, &Projector::boxes_callback, this);
     detection_flag_topic_sub = nh->subscribe(detection_flag_topic, 1, &Projector::flag_callback, this);
+
     if(rotation_optmization)
         odom_sub = nh->subscribe(odom_topic, 10, &Projector::odom_callback, this, ros::TransportHints().tcpNoDelay() );
 
@@ -56,9 +57,16 @@ void Projector::execute()
 // Check for frame transform every time a detection image is received
 void Projector::flag_callback(const std_msgs::Int8 & flag)
 {   
+
+
     try{
         listener->waitForTransform(global_frame, camera_frame, ros::Time::now(), ros::Duration(10.0) );
         listener->lookupTransform(global_frame, camera_frame, ros::Time(0), transform_buffer);
+        
+        // transform_buffer.
+        tf::Vector3 trans = transform_buffer.getOrigin();
+        // std::cout << "trans的坐标: " << trans.getX() << ", " << trans.getY() << ", " << trans.getZ() << std::endl;
+
         listener->lookupTransform(global_frame, robot_frame, ros::Time(0), robot_transform);
     }
     catch(tf::TransformException ex)
@@ -111,6 +119,7 @@ void Projector::odom_callback(const nav_msgs::Odometry & odom)
 
 custom_msgs::WorldObject Projector::process_cloud(std::string class_name, pcl::PointCloud<point_type> obj_cloud, int xmin, int xmax, int ymin, int ymax)
 {
+    // std::cout << "entry process_cloud" << std::endl;
     // publish_inliers: used to visualize the inlier cloud detected. 
     bool publish_inliers = false;
 
@@ -123,6 +132,7 @@ custom_msgs::WorldObject Projector::process_cloud(std::string class_name, pcl::P
     // Test if detected class is in classes array
     if (std::find(class_names.begin(), class_names.end(), class_name) == class_names.end())
     {
+        // std::cout << "Class not found in array of classes. Try adding it to the .yaml file. " << std::endl;
         // Element not in vector
         if(!quiet_mode) ROS_INFO_STREAM("\nClass "+class_name+ " not found in array of classes. Try adding it to the .yaml file. ");
         obj.prob = -1.0;
@@ -184,6 +194,8 @@ custom_msgs::WorldObject Projector::process_cloud(std::string class_name, pcl::P
                 obj_position.x += obj_cloud.at(index).x*mean_ratio;
                 obj_position.y += obj_cloud.at(index).y*mean_ratio;
                 obj_position.z += obj_cloud.at(index).z*mean_ratio;
+                // std::cout << "obj_disatance" << std::endl;
+                // std::cout << obj_position.x << " " << obj_position.y << " " << obj_position.z << std::endl;
             }
         }
 
@@ -208,6 +220,7 @@ custom_msgs::WorldObject Projector::process_cloud(std::string class_name, pcl::P
 
             obj_position = p_middle;
         }
+
         
         // 2. Convert oject location from camera frame to map frame
         pcl::PointXYZ position_final = Projector::convertToMapFrame(obj_position);
@@ -246,7 +259,9 @@ custom_msgs::WorldObject Projector::process_cloud(std::string class_name, pcl::P
     }
 
     // Person type
-    else if(class_name == "person"){
+    else if(class_name == "person")
+    {
+        // std::cout << "Person" << std::endl;
         obj.prob = 1;
         pcl::PointXYZ position; 
         int minimum_cluster_size = 10;
@@ -270,6 +285,7 @@ custom_msgs::WorldObject Projector::process_cloud(std::string class_name, pcl::P
         if(cloud_filtered->size() < minimum_cluster_size)
         {
             // Not enough points
+            // std::cout << "Not enough points" << std::endl;
             obj.prob = -1; 
         }
         else
@@ -329,6 +345,7 @@ custom_msgs::WorldObject Projector::process_cloud(std::string class_name, pcl::P
                 inlier_cloud.height = 1; 
                 inlier_cloud.is_dense = true;
 
+                // std::cout << "meanx:" << meanx << ", meany:" << meany << ", meanz:" << meanz << std::endl;
                 position = Projector::convertToMapFrame(pcl::PointXYZ(meanx, meany, meanz));
             }
 
@@ -338,6 +355,7 @@ custom_msgs::WorldObject Projector::process_cloud(std::string class_name, pcl::P
         obj.x = position.x;
         obj.y = position.y;
         obj.angle = 0;
+        // std::cout << "Person position: " << obj.x << ", " << obj.y << std::endl;
     }
 
     else {
@@ -609,6 +627,7 @@ custom_msgs::WorldObject Projector::process_cloud(std::string class_name, pcl::P
 
 void Projector::boxes_callback(const darknet_ros_msgs::BoundingBoxes::ConstPtr & boxes_ptr)
 {
+    // std::cout << "entry boxes_callback" << std::endl;
     count++; 
     transform = transform_buffer;
     int box_num = boxes_ptr->bounding_boxes.size();
@@ -768,6 +787,13 @@ pcl::PointXYZ Projector::convertToMapFrame(const pcl::PointXYZ & point)
     tf::Matrix3x3 rot_tf = transform.getBasis();       
     tf::Vector3 trans_tf = transform.getOrigin();
     
+
+    // std::cout << "trans_tf" << trans_tf << std::endl;
+    // std::cout << "trans_tf的坐标: "
+    //          << trans_tf.getX() << ", " << trans_tf.getY() << ", " << trans_tf.getZ()
+    //          << std::endl;
+
+
     // optional: use eigen for matrix multiplication
     Eigen::Vector3d obj_pos_eigen(point.x, point.y, point.z);
     Eigen::Matrix3d Rot;

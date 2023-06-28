@@ -3,7 +3,7 @@ camera_cx: 472.65
 camera_cy: 268.7
 camera_fx: 537.0
 camera_fy: 536.95
-max_proj_distance: 8.0
+max_proj_distance: 20.0
 
 # Object detection classes
 classes:
@@ -12,23 +12,27 @@ classes:
     - trash
     - fire
     - water
+    - person
 
 # Projection method
 # 0: Naive - median of middle points
 # 1: Preferred - Simple clustering (OR plane segmentation for doors)
 # 2: Advanced - Remove planes and then apply clustering
 # others: defaults to Preferred
-projection_method: 1
+projection_method: 2
 
 # Quiet mode: print less logs
-quiet_mode: false
+quiet_mode: true
 
 # Frames of reference
-camera_frame: /kinect2_rgb_optical_frame
-robot_frame: /base_link
-global_frame: /map
+camera_frame: camera_color_optical_frame
+robot_frame: base
+global_frame: odom
 
 # Darknet_ros topics
-pointcloud_topic: /camera/depth_registered/points
+pointcloud_topic: /camera/depth/color/points
 boxes_topic: /darknet_ros/bounding_boxes
-detection_flag_topic: /darknet_ros/flag_detection
+detection_flag_topic: /dummy_flag
+
+# rostopic pub /dummy_flag std_msgs/Int8 "data: 0" -r 1
+

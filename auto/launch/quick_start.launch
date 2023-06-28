@@ -9,6 +9,28 @@
     </include>
     
     <!-- RVIZ -->
-    <node pkg="rviz" type="rviz" name="rviz_vo" args="-d $(find auto)/rviz_config.rviz" if="$(arg rviz)"/>
+    <!-- <node pkg="rviz" type="rviz" name="rviz_vo" args="-d $(find auto)/rviz_config.rviz" if="$(arg rviz)"/> -->
 
 </launch>
+
+<!-- 
+cmake ../opencv \
+-DCMAKE_BUILD_TYPE=Release \
+-DCMAKE_INSTALL_PREFIX=/usr/local/opencv4 \
+-DOPENCV_EXTRA_MODULES_PATH=/home/ustc/robot/software/opencv/opencv_contrib/modules \
+-DBUILD_DOCS=ON \
+-DBUILD_EXAMPLES=ON \
+-DPYTHON3_EXECUTABLE=/usr/bin/python3 \
+-DPYTHON_INCLUDE_DIR=/usr/include/python3.8 \
+-DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython3.8.so \
+-DPYTHON3_NUMPY_INCLUDE_DIRS=/home/ustc/.local/lib/python3.8/site-packages/numpy/core/include \
+-DOPENCV_GENERATE_PKGCONFIG=ON \
+-DWITH_GTK_2_X=ON \
+-DWITH_OPENGL=ON \
+-DWITH_CUDA=ON \
+-DWITH_OPENCL=ON \
+-DCUDA_ARCH_BIN=8.6 \
+-DCUDA_ARCH_PTX=8.6 \
+-DBUILD_opencv_xfeatures2d=OFF \
+-DBUILD_opencv_hdf=OFF
+-->

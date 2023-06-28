@@ -47,6 +47,7 @@ class ObjectMarker:
 	def __init__(self, objects_topic, markers_topic, map_frame):
 		self.map_frame = map_frame
 		self.doors = []
+		self.trash = []
 		self.counter = 10000
 
 		# SUBSCRIBERS
@@ -66,6 +67,11 @@ class ObjectMarker:
 		if data.objClass == 'door':
 			print 'Processing door.\n'
 			ObjectMarker.clusterObject(self.doors, data.x, data.y)
+   
+		if data.objClass == 'trashcan':
+			print 'Processing trashcan.\n
+			ObjectMarker.clusterObject(self.trash, data.x, data.y)
+   
 
 	# Publishes all the doors in the list as markers if the number of doors near that position is greater than a give threshold
 	def publishDoorMarkers(self, thresh):
@@ -73,6 +79,12 @@ class ObjectMarker:
 			if door.count >= thresh:
 				marker = ObjectMarker.getMarker(door.x, door.y, 'door', door.id, self.map_frame, 0.3, 0.0, 0.0, 1.0, 0.6)
 				self.marker_pub.publish(marker)
+    
+		for trash in self.trash:
+			if trash.count >= thresh:
+				marker = ObjectMarker.getMarker(trash.x, trash.y, 'trashcan', trash.id, self.map_frame, 0.3, 0.0, 0.0, 1.0, 0.6)
+				self.marker_pub.publish(marker)
+    
 
 	# clusterObject:
 	#	Cluster's new object to objects of a list together if the are in range or add a new object to given list
